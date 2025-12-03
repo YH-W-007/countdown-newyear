@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>2026 倒计时</title>
 
-  <!-- 预加载你的高清背景图 -->
-  <link rel="preload" as="image" href="bg-large.webp" type="image/webp">
+  <!-- 预加载背景图 -->
+  <link rel="preload" as="image" href="bg.webp" type="image/webp">
 
   <style>
     * {
@@ -17,7 +17,7 @@
 
     body {
       font-family: "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
-      background-color: #1e3c72; /* 加载时底色 */
+      background-color: #1e3c72;
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -28,34 +28,39 @@
       overflow: hidden;
     }
 
-    /* 设置高清 WebP 为背景 */
-    body::before {
-      content: '';
-      position: absolute;
+    /* 背景容器 */
+    .background-container {
+      position: fixed;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
-      background-image: url('bg-large.webp');
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
+      width: 100%;
+      height: 100%;
       z-index: -2;
+      opacity: 0;
+      transition: opacity 1.2s ease-in-out;
     }
 
-    /* 半透明遮罩层（调亮版） */
-    body::after {
-      content: '';
-      position: absolute;
+    #bgImage {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .background-container.loaded {
+      opacity: 1;
+    }
+
+    /* 半透明遮罩层 */
+    .overlay {
+      position: fixed;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
       background: linear-gradient(
         to bottom,
-        rgba(0, 0, 0, 0.5),
-        rgba(0, 0, 0, 0.8)
+        rgba(0, 0, 0, 0.2),
+        rgba(0, 0, 0, 0.5)
       );
       z-index: -1;
     }
@@ -132,14 +137,13 @@
       }
     }
 
-    /* === 放大的彩蛋 emoji 动画 === */
+    /* === 彩蛋 emoji 动画（放大至 32px）=== */
     .celebration-emoji {
       position: fixed;
       top: -60px;
       z-index: 9998;
-      font-size: 32px; /* 放大到 32px */
+      font-size: 32px; /* 放大！*/
       pointer-events: none;
-      opacity: 1;
       animation: fall linear forwards;
     }
 
@@ -153,6 +157,12 @@
 </head>
 <body>
 
+  <!-- 优化背景图加载 -->
+  <div class="background-container" id="bgContainer">
+    <img src="bg.webp" alt="背景图" id="bgImage">
+  </div>
+  <div class="overlay"></div>
+
   <!-- 加载提示 -->
   <div id="loading" style="
     position: fixed;
@@ -165,7 +175,6 @@
     align-items: center;
     font-size: 1.5rem;
     z-index: 9999;
-    transition: opacity 0.5s ease-out;
   ">⏳ 正在加载...</div>
 
   <!-- 主内容 -->
@@ -186,7 +195,7 @@
   <!-- 倒计时逻辑 -->
   <script>
     function updateCountdown() {
-      const targetDate = new Date("December 31, 2025 00:00:00").getTime();
+      const targetDate = new Date("Decmber 31, 2025 00:00:00").getTime();
       const now = new Date().getTime();
       const difference = targetDate - now;
 
@@ -398,8 +407,7 @@
         { char: '🦖', chance: 0.07 }
       ];
 
-      // 总体触发概率约 40%
-      if (Math.random() > 0.4) return;
+      if (Math.random() > 0.4) return; // 控制频率
 
       for (const emoji of emojis) {
         if (Math.random() < emoji.chance) {
@@ -407,9 +415,9 @@
           el.className = 'celebration-emoji';
           el.textContent = emoji.char;
           el.style.left = `${Math.random() * window.innerWidth}px`;
-          el.style.animationDuration = `${3 + Math.random() * 2}s`; // 3~5 秒下落
+          el.style.animationDuration = `${3 + Math.random() * 2}s`; // 3~5秒
           document.body.appendChild(el);
-          setTimeout(() => el.remove(), 6000); // 6秒后移除
+          setTimeout(() => el.remove(), 6000);
           break;
         }
       }
@@ -445,18 +453,23 @@
       createEmoji();
     });
 
-    // 隐藏加载提示
+    // 图片加载完成 → 渐显
     window.addEventListener('load', () => {
+      const img = document.getElementById('bgImage');
+      const container = document.getElementById('bgContainer');
+      const loading = document.getElementById('loading');
+
+      if (img.complete) {
+        container.classList.add('loaded');
+      } else {
+        img.onload = () => container.classList.add('loaded');
+      }
+
       setTimeout(() => {
-        const loading = document.getElementById('loading');
-        if (loading) {
-          loading.style.opacity = '0';
-          setTimeout(() => loading.remove(), 500);
-        }
+        loading.style.opacity = '0';
+        setTimeout(() => loading.remove(), 500);
       }, 500);
     });
   </script>
 </body>
 </html>
-
-
