@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
   <title>2025 春节倒计时</title>
+
+  <!-- 预加载你的高清背景图 -->
+  <link rel="preload" as="image" href="bg-large.webp" type="image/webp">
+
   <style>
     * {
       margin: 0;
@@ -14,12 +18,6 @@
     body {
       font-family: "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
       background-color: #1e3c72; /* 加载时底色 */
-      background-image: url('bg-compressed.jpg'); /* 推荐改名并压缩图片 */
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      background-blend-mode: overlay;
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -30,8 +28,24 @@
       overflow: hidden;
     }
 
-    /* 半透明遮罩层 */
+    /* 设置高清 WebP 为背景 */
     body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: url('bg-large.webp');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      z-index: -2;
+    }
+
+    /* 半透明遮罩层（调亮版） */
+    body::after {
       content: '';
       position: absolute;
       top: 0;
@@ -40,8 +54,8 @@
       bottom: 0;
       background: linear-gradient(
         to bottom,
-        rgba(0, 0, 0, 0.4),
-        rgba(0, 0, 0, 0.7)
+        rgba(0, 0, 0, 0.5),
+        rgba(0, 0, 0, 0.8)
       );
       z-index: -1;
     }
@@ -69,7 +83,8 @@
     h1 {
       font-size: clamp(1.8rem, 6vw, 3rem);
       margin-bottom: 20px;
-      text-shadow: 0 2px 10px rgba(255, 255, 255, 0.5);
+      text-shadow: 0 2px 10px rgba(255, 255, 255, 0.5),
+                   0 0 20px rgba(255, 255, 255, 0.3);
       line-height: 1.2;
     }
 
@@ -114,6 +129,24 @@
       }
       .countdown span {
         font-size: 1.5rem !important;
+      }
+    }
+
+    /* === 放大的彩蛋 emoji 动画 === */
+    .celebration-emoji {
+      position: fixed;
+      top: -60px;
+      z-index: 9998;
+      font-size: 32px; /* 放大到 32px */
+      pointer-events: none;
+      opacity: 1;
+      animation: fall linear forwards;
+    }
+
+    @keyframes fall {
+      to {
+        transform: translateY(calc(100vh + 60px)) rotate(360deg);
+        opacity: 0;
       }
     }
   </style>
@@ -179,6 +212,7 @@
 
   <!-- 烟花特效脚本 -->
   <script>
+    // === Canvas 初始化 ===
     const canvas = document.getElementById('fireworksCanvas');
     const ctx = canvas.getContext('2d');
 
@@ -190,6 +224,7 @@
     window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
     resizeCanvas();
 
+    // === 烟花类 ===
     class Firework {
       constructor(sx, sy, tx, ty) {
         this.sx = sx; this.sy = sy;
@@ -227,6 +262,7 @@
       }
     }
 
+    // === 粒子类 ===
     class Particle {
       constructor(x, y, color) {
         this.x = x; this.y = y;
@@ -259,10 +295,11 @@
       }
     }
 
+    // === 普通爆炸 ===
     function createExplosion(x, y, color) {
       const count = 80 + Math.floor(Math.random() * 40);
       const particles = [];
-      const shape = Math.floor(Math.random() * 3);
+      const shape = Math.floor(Math.random() * 3); // 0=circle, 1=heart, 2=star
       for (let i = 0; i < count; i++) {
         let angle, speed;
         if (shape === 1) {
@@ -286,6 +323,7 @@
       explosions.push({ particles });
     }
 
+    // === 终极烟花 ===
     function createMegaExplosion(x, y) {
       const colors = ['gold', 'yellow', 'cyan', 'magenta', 'white', '#ffcc00'];
       for (let i = 0; i < 200; i++) {
@@ -317,6 +355,7 @@
       setTimeout(() => createExplosion(x, y, 'white'), 600);
     }
 
+    // === 庆祝反馈 ===
     function triggerCelebrateEffect() {
       const flash = document.createElement('div');
       flash.style.position = 'fixed'; flash.style.top = 0; flash.style.left = 0;
@@ -331,6 +370,7 @@
       audio.play().catch(e => console.log("音效被阻止"));
     }
 
+    // === 动画主循环 ===
     let fireworks = []; let explosions = [];
 
     function animate() {
@@ -347,6 +387,35 @@
 
     animate();
 
+    // === 小彩蛋系统（放大 emoji）===
+    function createEmoji() {
+      const emojis = [
+        { char: '🧧', chance: 0.02 },
+        { char: '🐷', chance: 0.08 },
+        { char: '🐟', chance: 0.07 },
+        { char: '🥟', chance: 0.07 },
+        { char: '💻', chance: 0.07 },
+        { char: '🦖', chance: 0.07 }
+      ];
+
+      // 总体触发概率约 40%
+      if (Math.random() > 0.4) return;
+
+      for (const emoji of emojis) {
+        if (Math.random() < emoji.chance) {
+          const el = document.createElement('div');
+          el.className = 'celebration-emoji';
+          el.textContent = emoji.char;
+          el.style.left = `${Math.random() * window.innerWidth}px`;
+          el.style.animationDuration = `${3 + Math.random() * 2}s`; // 3~5 秒下落
+          document.body.appendChild(el);
+          setTimeout(() => el.remove(), 6000); // 6秒后移除
+          break;
+        }
+      }
+    }
+
+    // === 连击检测 + 点击事件 ===
     let clickCount = 0;
     const CLICK_THRESHOLD = 5;
     const RESET_DELAY = 1000;
@@ -358,17 +427,22 @@
       else clickCount = 1;
       lastClickTime = now;
 
+      // 发射普通烟花
       const fy = canvas.height;
       const fx = e.clientX;
       const tx = e.clientX;
       const ty = e.clientY * 0.6;
       fireworks.push(new Firework(fx, fy, tx, ty));
 
+      // 超级烟花
       if (clickCount >= CLICK_THRESHOLD) {
         setTimeout(() => createMegaExplosion(e.clientX, e.clientY * 0.5), 300);
         triggerCelebrateEffect();
         clickCount = 0;
       }
+
+      // 触发彩蛋
+      createEmoji();
     });
 
     // 隐藏加载提示
@@ -384,4 +458,3 @@
   </script>
 </body>
 </html>
-
